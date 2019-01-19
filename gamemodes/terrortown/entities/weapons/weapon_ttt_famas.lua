@@ -37,31 +37,12 @@ SWEP.WorldModel = "models/weapons/w_rif_famas.mdl"
 SWEP.IronSightsPos = Vector( -6.24, -2.757, 1.36 )
 SWEP.IronSightsAng = Vector( 0, 0, 0 )
 
---- TTT config values
-
--- Kind specifies the category this weapon is in. Players can only carry one of
--- each. Can be: WEAPON_... MELEE, PISTOL, HEAVY, NADE, CARRY, EQUIP1, EQUIP2 or ROLE.
--- Matching SWEP.Slot values: 0      1       2     3      4      6       7        8
 SWEP.Kind = WEAPON_HEAVY
-
--- If AutoSpawnable is true and SWEP.Kind is not WEAPON_EQUIP1/2, then this gun can
--- be spawned as a random weapon.
 SWEP.AutoSpawnable = true
-
--- The AmmoEnt is the ammo entity that can be picked up when carrying this gun.
 SWEP.AmmoEnt = "item_ammo_smg1_ttt"
-
--- InLoadoutFor is a table of ROLE_* entries that specifies which roles should
--- receive this weapon as soon as the round starts. In this case, none.
 SWEP.InLoadoutFor = { nil }
-
--- If AllowDrop is false, players can't manually drop the gun with Q
 SWEP.AllowDrop = true
-
--- If IsSilent is true, victims will not scream upon death.
 SWEP.IsSilent = false
-
--- If NoSights is true, the weapon won't have ironsights
 SWEP.NoSights = false
 
 function SWEP:GetHeadshotMultiplier(victim, dmginfo)
@@ -93,18 +74,16 @@ function SWEP:Deploy()
 end
 
 function SWEP:SetupDataTables()
-	-- Put it in the last slot, least likely to interfere with derived weapon's
-	-- own stuff.
-	self:NetworkVar("Bool",  3, "Ironsights")
-
 	-- Set to "0.0" if not reloading. Set to "Current time + (reload animation length)" when reloading.
-	self:NetworkVar("Float", 4, "ReloadEndTime")
+	self:NetworkVar("Float", 0, "ReloadEndTime")
 	-- Set to "true" if the "SWEP:Think()" function needs to do a burst fire.
-	self:NetworkVar("Bool",  4, "BurstFiring")
+	self:NetworkVar("Bool",  0, "BurstFiring")
 	-- The number of shots already fired during the current burst. "0" no shots have been shot yet.
-	self:NetworkVar("Int",   4, "BurstShotsFired")
+	self:NetworkVar("Int",   0, "BurstShotsFired")
 	-- The time that the current shot being fired in the burst will be finished.
-	self:NetworkVar("Float", 5, "BurstShotEndTime")
+	self:NetworkVar("Float", 1, "BurstShotEndTime")
+	
+	self.BaseClass.SetupDataTables(self)
 end
 
 function SWEP:GetRandomViewpunchAngle()
@@ -117,10 +96,10 @@ function SWEP:GetRandomViewpunchAngle()
 end
 
 function SWEP:Reload()
-	if self:Clip1() == self.Primary.ClipSize or self.Owner:GetAmmoCount(self.Primary.Ammo) < 1 then return end
-
-	self:SetIronsights(false)
+	if ( self:Clip1() == self.Primary.ClipSize or self:GetOwner():GetAmmoCount( self.Primary.Ammo ) <= 0 ) then return end
 	self:DefaultReload(self.ReloadAnim)
+	self:SetIronsights(false)
+
 	-- Set the time the reloading will end for the SWEP:Think() function.
 	self:SetReloadEndTime(CurTime() + self:SequenceDuration(self.ReloadAnim))
 	self:SetBurstShotsFired(0)
@@ -129,6 +108,7 @@ function SWEP:Reload()
 end
 
 function SWEP:Think()
+	self.BaseClass.Think(self)
 	-- Deal with reloading shit.
 	if self:GetReloadEndTime() ~= 0.0 then
 		if self:GetReloadEndTime() <= CurTime() then
