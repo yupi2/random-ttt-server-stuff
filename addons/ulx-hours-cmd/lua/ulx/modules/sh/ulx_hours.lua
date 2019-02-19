@@ -1,5 +1,5 @@
--- Generate a key at https://steamcommunity.com/dev/apikey
-local steamWebApiKey = "INSERT_API_KEY_HERE"
+-- Generate a key at https://steamcommunity.com/dev/apikey and put it in a file at garrysmod/data/steamapikey.txt
+local steamWebApiKey = file.Read("steamapikey.txt")
 
 function ulx.hours(calling_ply, target_ply)
 	-- NOTE: Printing "(SILENT)" in logged string so admins won't be
